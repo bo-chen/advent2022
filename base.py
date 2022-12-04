@@ -3,6 +3,8 @@ import numpy as np
 import os
 import re
 import sys
+import functools
+import operator
 
 def pm(m):
     for r in m:
