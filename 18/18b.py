@@ -14,7 +14,7 @@ def pm(m):
         print("")
 
 def pktoa(pstr):
-    return list(map(lambda x: int(x), pstr.split(",")))
+    return np.array(list(map(lambda x: int(x), pstr.split(","))))
 
 def pkey(p):
     return ",".join(map(lambda x: str(x), p))
@@ -29,11 +29,12 @@ maxv = ""
 vs = set()
 for l in ls:
     vs.add(l)
-    x,y,z = pktoa(l)
-    if x > maxx:
-        maxx = x
+    v = pktoa(l)
+    if v[0] > maxx:
+        maxx = v[0]
         maxv = l
 
+print(np.linalg.norm(np.array([1,0,0])))
 
 walkedf = set()
 def walkv(va, na):
@@ -42,18 +43,17 @@ def walkv(va, na):
     walkedf.add(pkey(va) + "," + pkey(na))
     tot = 1
 
-    ta = []
     if na[0] != 0:
-        ta = [[0,-1,0],[0,1,0],[0,0,-1],[0,0,1]]
+        ta = np.array([[0,-1,0],[0,1,0],[0,0,-1],[0,0,1]])
     elif na[1] != 0:
-        ta = [[-1,0,0],[1,0,0],[0,0,-1],[0,0,1]]
+        ta = np.array([[-1,0,0],[1,0,0],[0,0,-1],[0,0,1]])
     else:
-        ta = [[-1,0,0],[1,0,0],[0,-1,0],[0,1,0]]
+        ta = np.array([[-1,0,0],[1,0,0],[0,-1,0],[0,1,0]])
 
     for t in ta:
-        concave = [va[0]+na[0]+t[0], va[1]+na[1]+t[1], va[2]+na[2]+t[2]]
-        flat = [va[0]+t[0], va[1]+t[1], va[2]+t[2]]
-        negt = [t[0] * -1, t[1] * -1, t[2] * -1]
+        concave = np.add(np.add(va, na), t)
+        flat = np.add(va, t)
+        negt = np.multiply(-1, t)
 
         if pkey(concave) in vs:
             tot += walkv(concave, negt)
