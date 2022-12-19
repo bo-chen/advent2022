@@ -47,62 +47,64 @@ def optbp(bp, robots, res, tl, maxo):
         nrobots[3] += 1
         nnres = np.subtract(nres, bp[3])
         q, nresult = optbp(bp, nrobots, nnres, tl - 1, maxo)
-        nresult[24- tl + 1] = ("build geo")
+        nresult[33- tl] = ("build geo skip all")
         return q, nresult
 
     if bp[3][2] <= res[2]:
         q, nresult = optbp(bp, robots, nres, tl - 1, maxo)
-        nresult[24- tl + 1] = ("nop waiting on 3")
+        nresult[33-tl] = ("nop waiting on geo")
         return q, nresult
 
     else:
         best = -1
         bestresult = {}
-        if canBuild[2]:
+        if canBuild[2] and robots[2] < bp[3][2]:
             nrobots = np.array(robots)
             nrobots[2] += 1
             nnres = np.subtract(nres, bp[2])
             q, nresult = optbp(bp, nrobots, nnres, tl - 1, maxo)
+            '''
             if robots[2] == 0:
-                nresult[24- tl + 1] = ("build obs")
+                nresult[33-tl] = ("build obs skip due to none")
                 return q, nresult
 
             tto3 = math.ceil(bp[3][2] - res[2]) / robots[2]
             if bp[3][2] > res[2] and tto3 * robots[0] + res[0] >= bp[3][0] + bp[2][0]:
-                nresult[24- tl + 1] = ("build obs")
+                nresult[33-tl] = ("build obs skip due to enough time")
                 return q, nresult
-            elif q > best:
-                nresult[24- tl + 1] = ("build obs")
+            '''
+            if q > best:
+                nresult[33-tl] = ("build obs")
                 bestresult = nresult
                 best = q
-        if canBuild[1]:
+        if canBuild[1] and robots[1] < bp[2][1]:
             nrobots = np.array(robots)
             nrobots[1] += 1
             nnres = np.subtract(nres, bp[1])
             q, nresult = optbp(bp, nrobots, nnres, tl - 1, maxo)
             if q > best:
-                nresult[24- tl + 1] = ("build clay")
+                nresult[33-tl] = ("build clay")
                 bestresult = nresult
                 best = q
-        if canBuild[0]:
+        if canBuild[0] and robots[0] < maxo:
             nrobots = np.array(robots)
             nrobots[0] += 1
             nnres = np.subtract(nres, bp[0])
             q, nresult = optbp(bp, nrobots, nnres, tl - 1, maxo)
             if q > best:
-                nresult[24- tl + 1] = ("build ore")
+                nresult[33-tl] = ("build ore")
                 bestresult = nresult
                 best = q
         if nres[0] < 2 * maxo:
             q, nresult = optbp(bp, robots, nres, tl - 1, maxo)
             if q > best:
-                nresult[24- tl + 1] = ("nop")
+                nresult[33-tl] = ("nop")
                 bestresult = nresult
                 best = q
 
         return best, bestresult
 
-q, result = optbp(bps[0], np.array([1,0,0,0]), np.array([0,0,0,0]), 24, maxos[0])
+q, result = optbp(bps[0], np.array([1,0,0,0]), np.array([0,0,0,0]), 32, maxos[0])
 print(result)
 print(q)
 
@@ -110,7 +112,7 @@ print(q)
 t = 0
 for i in range(len(bps)):
     bp = bps[i]
-    q, result = optbp(bp, np.array([1,0,0,0]), np.array([0,0,0,0]), 24, maxos[i])
+    q, result = optbp(bp, np.array([1,0,0,0]), np.array([0,0,0,0]), 32, maxos[i])
     t += q * (i+1)
     print(f'bp {i} q {q}')
 
