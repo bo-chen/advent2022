@@ -20,7 +20,7 @@ def pkey(p):
     return ",".join(map(lambda x: str(x), p))
 
 ls = []
-with open('./t1.txt') as fp:
+with open('./in.txt') as fp:
     for line in fp:
         ls.append(line.strip())
 
@@ -31,90 +31,64 @@ for l in ls:
     bps.append([np.array([int(ms[1]),0,0,0]), np.array([int(ms[2]),0,0,0]),np.array([int(ms[3]),int(ms[4]),0,0]),np.array([int(ms[5]),0,int(ms[6]), 0])])
     maxos.append(max([int(ms[1]), int(ms[2]), int(ms[3])]))
 
+itos = {0: "ore", 1:"clay", 2:"obs", 3:"geo"}
+tott = 32
+
 def optbp(bp, robots, res, tl, maxo):
-    if tl == 0:
+    if tl <= 0:
         return res[3], {}
 
-    nres = np.add(res, robots)
+    bestq = 0
+    bestRes = {}
+    for ri in range(len(bp) - 1, -1, -1):
+        if ri == 0 and robots[0] >= maxo:
+            continue
+        if ri == 1 and robots[1] >= bp[2][1]:
+            continue
+        if ri == 2 and robots[2] >= bp[3][2]:
+            continue
+        robotcost = bp[ri]
+        maxT = 0
+        for i in range(len(res)):
+            rc = robotcost[i]
+            if rc == 0:
+                continue
+            if robots[i] == 0:
+                maxT = -1
+                break
+            if rc < res[i]:
+                continue
+            ttf = math.ceil((rc - res[i]) / robots[i])
+            if maxT < ttf:
+                maxT = ttf
 
-    canBuild = [False, False, False, False]
-    for br in range(len(bp)):
-        rc = bp[br]
-        canBuild[br] = np.all(np.greater_equal(res, rc))
-
-    if canBuild[3]:
+        if maxT < 0 or maxT >= tl:
+            continue
         nrobots = np.array(robots)
-        nrobots[3] += 1
-        nnres = np.subtract(nres, bp[3])
-        q, nresult = optbp(bp, nrobots, nnres, tl - 1, maxo)
-        nresult[33- tl] = ("build geo skip all")
-        return q, nresult
+        nrobots[ri] += 1
+        nres = np.add(res, np.multiply(maxT + 1, robots))
+        nres = np.subtract(nres, robotcost)
+        q, result = optbp(bp, nrobots, nres, tl - 1 - maxT, maxo)
+        if q > bestq:
+            bestq = q
+            result[tott + 1 - tl + maxT] = f"build {itos[ri]}"
+            bestRes = result
 
-    if bp[3][2] <= res[2]:
-        q, nresult = optbp(bp, robots, nres, tl - 1, maxo)
-        nresult[33-tl] = ("nop waiting on geo")
-        return q, nresult
+    q = robots[3] * tl + res[3]
+    if q >= bestq:
+        return q, {(tott + 1 - tl): f"nop rest for {q}"}
 
-    else:
-        best = -1
-        bestresult = {}
-        if canBuild[2] and robots[2] < bp[3][2]:
-            nrobots = np.array(robots)
-            nrobots[2] += 1
-            nnres = np.subtract(nres, bp[2])
-            q, nresult = optbp(bp, nrobots, nnres, tl - 1, maxo)
-            '''
-            if robots[2] == 0:
-                nresult[33-tl] = ("build obs skip due to none")
-                return q, nresult
+    return bestq, bestRes
 
-            tto3 = math.ceil(bp[3][2] - res[2]) / robots[2]
-            if bp[3][2] > res[2] and tto3 * robots[0] + res[0] >= bp[3][0] + bp[2][0]:
-                nresult[33-tl] = ("build obs skip due to enough time")
-                return q, nresult
-            '''
-            if q > best:
-                nresult[33-tl] = ("build obs")
-                bestresult = nresult
-                best = q
-        if canBuild[1] and robots[1] < bp[2][1]:
-            nrobots = np.array(robots)
-            nrobots[1] += 1
-            nnres = np.subtract(nres, bp[1])
-            q, nresult = optbp(bp, nrobots, nnres, tl - 1, maxo)
-            if q > best:
-                nresult[33-tl] = ("build clay")
-                bestresult = nresult
-                best = q
-        if canBuild[0] and robots[0] < maxo:
-            nrobots = np.array(robots)
-            nrobots[0] += 1
-            nnres = np.subtract(nres, bp[0])
-            q, nresult = optbp(bp, nrobots, nnres, tl - 1, maxo)
-            if q > best:
-                nresult[33-tl] = ("build ore")
-                bestresult = nresult
-                best = q
-        if nres[0] < 2 * maxo:
-            q, nresult = optbp(bp, robots, nres, tl - 1, maxo)
-            if q > best:
-                nresult[33-tl] = ("nop")
-                bestresult = nresult
-                best = q
+# q, result = optbp(bps[0], np.array([1,0,0,0]), np.array([0,0,0,0]), tott, maxos[0])
+# print(result)
+# print(q)
 
-        return best, bestresult
-
-q, result = optbp(bps[0], np.array([1,0,0,0]), np.array([0,0,0,0]), 32, maxos[0])
-print(result)
-print(q)
-
-'''
-t = 0
-for i in range(len(bps)):
+t = 1
+for i in range(3):
     bp = bps[i]
-    q, result = optbp(bp, np.array([1,0,0,0]), np.array([0,0,0,0]), 32, maxos[i])
-    t += q * (i+1)
-    print(f'bp {i} q {q}')
+    q, result = optbp(bp, np.array([1,0,0,0]), np.array([0,0,0,0]), tott, maxos[i])
+    t *= q
+    print(f"{i} done")
 
 print(f"total {t}")
-'''
